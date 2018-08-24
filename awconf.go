@@ -10,25 +10,19 @@ import (
 
 /**
 Priority:
-appname.toml
-<executable directory>/appname.toml
+./appname.toml
 $HOME/.appname.toml
 $XDG_CONFIG_HOME/appname/appname.toml
 /usr/local/etc/appname.toml
 /usr/etc/appname.toml
+<executable directory>/appname.toml
+$GOBIN/appname.toml
+$GOPATH/bin/appname.toml
 */
 
 func LoadConfig(name string, conf interface{}) error {
 	nametoml := name + ".toml"
 	paths := []string{nametoml}
-
-	ex, err := os.Executable()
-	if err == nil {
-		ex, err = filepath.EvalSymlinks(ex)
-	}
-	if err == nil {
-		paths = append(paths, filepath.Join(filepath.Dir(ex), nametoml))
-	}
 
 	home := os.Getenv("HOME")
 	if home != "" {
@@ -38,10 +32,30 @@ func LoadConfig(name string, conf interface{}) error {
 	xdg := os.Getenv("XDG_CONFIG_HOME")
 	if xdg != "" {
 		paths = append(paths, filepath.Join(xdg, name, nametoml))
+	} else {
+		paths = append(paths, filepath.Join(home, ".config", name, nametoml))
 	}
 
 	paths = append(paths, filepath.Join("/usr/local/etc", nametoml))
 	paths = append(paths, filepath.Join("/usr/etc", nametoml))
+
+	ex, err := os.Executable()
+	if err == nil {
+		ex, err = filepath.EvalSymlinks(ex)
+	}
+	if err == nil {
+		paths = append(paths, filepath.Join(filepath.Dir(ex), nametoml))
+	}
+
+	gobin := os.Getenv("GOBIN")
+	if gobin != "" {
+		paths = append(paths, filepath.Join(gobin, nametoml))
+	}
+
+	gopath := os.Getenv("GOPATH")
+	if gopath != "" {
+		paths = append(paths, filepath.Join(gopath, "bin", nametoml))
+	}
 
 	for _, p := range paths {
 		if f, err := os.Stat(p); err == nil {
