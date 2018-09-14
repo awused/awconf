@@ -13,6 +13,7 @@ Priority:
 ./appname.toml
 $HOME/.appname.toml
 $XDG_CONFIG_HOME/appname/appname.toml
+$XDG_CONFIG_HOME/appname/config.toml
 /usr/local/etc/appname.toml
 /usr/etc/appname.toml
 <executable directory>/appname.toml
@@ -32,8 +33,10 @@ func LoadConfig(name string, conf interface{}) error {
 	xdg := os.Getenv("XDG_CONFIG_HOME")
 	if xdg != "" {
 		paths = append(paths, filepath.Join(xdg, name, nametoml))
+		paths = append(paths, filepath.Join(xdg, name, "config.toml"))
 	} else {
 		paths = append(paths, filepath.Join(home, ".config", name, nametoml))
+		paths = append(paths, filepath.Join(home, ".config", name, "config.toml"))
 	}
 
 	paths = append(paths, filepath.Join("/usr/local/etc", nametoml))
