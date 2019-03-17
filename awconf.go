@@ -2,6 +2,7 @@ package awconf
 
 import (
 	"errors"
+	"flag"
 	"os"
 	"path/filepath"
 
@@ -9,6 +10,9 @@ import (
 )
 
 /**
+Override config detection with the -awconf flag, but flags need to be parsed
+by your executable to enable this. Specify /dev/null to use the empty config.
+
 Priority:
 ./appname.toml
 $HOME/.appname.toml
@@ -21,7 +25,14 @@ $GOBIN/appname.toml
 $GOPATH/bin/appname.toml
 */
 
+var override = flag.String("awconf", "", "Specify a config file to use")
+
 func LoadConfig(name string, conf interface{}) error {
+	if flag.Parsed() && *override != "" {
+		_, err := toml.DecodeFile(*override, conf)
+		return err
+	}
+
 	nametoml := name + ".toml"
 	paths := []string{nametoml}
 
