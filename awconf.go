@@ -27,6 +27,7 @@ $GOPATH/bin/appname.toml
 
 var override = flag.String("awconf", "", "Specify a config file to use")
 
+// LoadConfig will attempt to find the config and load it into the provided reference.
 func LoadConfig(name string, conf interface{}) error {
 	if flag.Parsed() && *override != "" {
 		_, err := toml.DecodeFile(*override, conf)
