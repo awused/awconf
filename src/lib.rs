@@ -1,8 +1,8 @@
-use config::{self, Config, ConfigError, File};
-use dirs;
-use serde::Deserialize;
 use std::env::current_exe;
 use std::path::PathBuf;
+
+use config::{self, Config, ConfigError, File};
+use serde::Deserialize;
 
 /// Attempts to load a config for the application with the given name, trying
 /// files different locations in order of priority.
@@ -20,7 +20,7 @@ pub fn load_config<'a, T: Deserialize<'a>>(
 ) -> Result<T, ConfigError> {
     if let Some(p) = override_name {
         let mut c = Config::default();
-        match c.merge(File::with_name(&p)) {
+        match c.merge(File::with_name(p)) {
             Ok(_) => return c.try_into(),
             Err(e) => return Err(e),
         }
@@ -49,7 +49,7 @@ pub fn load_config<'a, T: Deserialize<'a>>(
 
     for p in paths {
         let mut c = Config::default();
-        if let Ok(_) = c.merge(File::from(p)) {
+        if c.merge(File::from(p)).is_ok() {
             return c.try_into();
         }
     }
