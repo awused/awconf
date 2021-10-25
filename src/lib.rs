@@ -16,11 +16,11 @@ use serde::Deserialize;
 /// <executable directory>/appname.toml
 pub fn load_config<'a, T: Deserialize<'a>>(
     name: &str,
-    override_name: &Option<String>,
+    override_name: &Option<PathBuf>,
 ) -> Result<T, ConfigError> {
     if let Some(p) = override_name {
         let mut c = Config::default();
-        match c.merge(File::with_name(p)) {
+        match c.merge(File::from(p.clone())) {
             Ok(_) => return c.try_into(),
             Err(e) => return Err(e),
         }
