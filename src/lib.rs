@@ -1,8 +1,30 @@
 use std::env::current_exe;
 use std::path::PathBuf;
 
-use config::{self, Config, ConfigError, File};
-use serde::Deserialize;
+use serde::de::DeserializeOwned;
+use toml::de;
+
+#[derive(Debug)]
+pub enum Error {
+    /// An error when reading the file.
+    IO(std::io::Error),
+    /// An error during deserialization.
+    Deserialization(de::Error),
+    /// No suitable configuration file was found.
+    NotFound,
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Self::IO(e)
+    }
+}
+
+impl From<de::Error> for Error {
+    fn from(e: de::Error) -> Self {
+        Self::Deserialization(e)
+    }
+}
 
 /// Attempts to load a config for the application with the given name, trying
 /// files different locations in order of priority.
@@ -14,16 +36,12 @@ use serde::Deserialize;
 /// /usr/local/etc/appname.toml
 /// /usr/etc/appname.toml
 /// <executable directory>/appname.toml
-pub fn load_config<'a, T: Deserialize<'a>>(
+pub fn load_config<T: DeserializeOwned>(
     name: &str,
     override_name: &Option<PathBuf>,
-) -> Result<T, ConfigError> {
+) -> Result<T, Error> {
     if let Some(p) = override_name {
-        let mut c = Config::default();
-        match c.merge(File::from(p.clone())) {
-            Ok(_) => return c.try_into(),
-            Err(e) => return Err(e),
-        }
+        return Ok(toml::from_slice(&std::fs::read(p)?)?);
     }
 
     let nametoml = format!("{}.toml", name);
@@ -48,11 +66,12 @@ pub fn load_config<'a, T: Deserialize<'a>>(
     }
 
     for p in paths {
-        let mut c = Config::default();
-        if c.merge(File::from(p)).is_ok() {
-            return c.try_into();
+        if !p.is_file() {
+            continue;
         }
+
+        return Ok(toml::from_slice(&std::fs::read(p)?)?);
     }
 
-    Err(ConfigError::NotFound("No config found.".to_string()))
+    Err(Error::NotFound)
 }
