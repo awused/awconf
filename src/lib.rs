@@ -44,7 +44,7 @@ pub fn load_config<T: DeserializeOwned>(
         return Ok(toml::from_slice(&std::fs::read(p)?)?);
     }
 
-    let nametoml = format!("{}.toml", name);
+    let nametoml = format!("{name}.toml");
 
     let mut paths = vec![PathBuf::from(&nametoml)];
 
