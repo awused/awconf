@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dirs = "4.0.0"
-serde = { version = "1.0.154", default-features = false }
-toml = "0.7.2"
+dirs = "5.0.0"
+serde = { version = "1.0.160", default-features = false }
+toml = "0.7.3"
