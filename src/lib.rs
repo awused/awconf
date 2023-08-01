@@ -51,11 +51,15 @@ impl From<std::str::Utf8Error> for Error {
 /// /usr/local/etc/appname.toml
 /// /usr/etc/appname.toml
 /// [executable directory]/appname.toml
-pub fn load_config<T: DeserializeOwned>(
-    name: &str,
-    override_file: Option<&Path>,
-    default_conf: Option<&str>,
+pub fn load_config<N: AsRef<str>, O: AsRef<Path>, D: AsRef<str>, T: DeserializeOwned>(
+    name: N,
+    override_file: Option<O>,
+    default_conf: Option<D>,
 ) -> Result<T, Error> {
+    let name = name.as_ref();
+    let override_file = override_file.as_ref().map(AsRef::as_ref);
+    let default_conf = default_conf.as_ref().map(AsRef::as_ref);
+
     if let Some(p) = override_file {
         if p.exists() && !p.is_file() && !p.is_dir() {
             if let Some(default_conf) = default_conf {
