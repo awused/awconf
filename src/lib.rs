@@ -1,5 +1,5 @@
 use std::env::current_exe;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::from_utf8;
 
 use serde::de::DeserializeOwned;
@@ -37,7 +37,13 @@ impl From<std::str::Utf8Error> for Error {
 
 /// Attempts to load a config for the application with the given name, trying
 /// files different locations in order of priority.
-/// Can be overridden by specifying an override_name.
+///
+/// Can be overridden by specifying an `override_file` which should be exposed to end users as a
+/// cli flag.
+///
+/// `default_conf`, if set, will be used when nothing can be found or when `override_file` is
+/// neither a file nor a directory, such as /dev/null.
+///
 /// ./appname.toml
 /// $HOME/.appname.toml
 /// $XDG_CONFIG_HOME/appname/appname.toml
@@ -47,9 +53,15 @@ impl From<std::str::Utf8Error> for Error {
 /// [executable directory]/appname.toml
 pub fn load_config<T: DeserializeOwned>(
     name: &str,
-    override_name: &Option<PathBuf>,
+    override_file: Option<&Path>,
+    default_conf: Option<&str>,
 ) -> Result<T, Error> {
-    if let Some(p) = override_name {
+    if let Some(p) = override_file {
+        if p.exists() && !p.is_file() && !p.is_dir() {
+            if let Some(default_conf) = default_conf {
+                return Ok(toml::from_str(default_conf)?);
+            }
+        }
         return Ok(toml::from_str(from_utf8(&std::fs::read(p)?)?)?);
     }
 
@@ -80,6 +92,10 @@ pub fn load_config<T: DeserializeOwned>(
         }
 
         return Ok(toml::from_str(from_utf8(&std::fs::read(p)?)?)?);
+    }
+
+    if let Some(default_conf) = default_conf {
+        return Ok(toml::from_str(default_conf)?);
     }
 
     Err(Error::NotFound)
