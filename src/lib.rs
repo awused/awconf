@@ -35,6 +35,17 @@ impl From<std::str::Utf8Error> for Error {
     }
 }
 
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::IO(e) => write!(f, "IO error [{e}]"),
+            Self::Deserialization(e) => write!(f, "Deserialization failed [{e}]"),
+            Self::Utf8Error(e) => write!(f, "Invalid UTF-8 [{e}]"),
+            Self::NotFound => write!(f, "No config found"),
+        }
+    }
+}
+
 /// Attempts to load a config for the application with the given name, trying
 /// files different locations in order of priority.
 ///
