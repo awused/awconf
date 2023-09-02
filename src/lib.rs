@@ -47,7 +47,8 @@ impl std::fmt::Display for Error {
 }
 
 /// Attempts to load a config for the application with the given name, trying
-/// files different locations in order of priority.
+/// files different locations in order of priority. Returns the config and where it was loaded
+/// from.
 ///
 /// Can be overridden by specifying an `override_file` which should be exposed to end users as a
 /// cli flag.
@@ -66,18 +67,19 @@ pub fn load_config<T: DeserializeOwned>(
     name: impl AsRef<str>,
     override_file: Option<impl AsRef<Path>>,
     default_conf: Option<impl AsRef<str>>,
-) -> Result<T, Error> {
+) -> Result<(T, Option<PathBuf>), Error> {
     let name = name.as_ref();
-    let override_file = override_file.as_ref().map(AsRef::as_ref);
     let default_conf = default_conf.as_ref().map(AsRef::as_ref);
 
-    if let Some(p) = override_file {
+    if let Some(path) = override_file {
+        let p = path.as_ref();
         if p.exists() && !p.is_file() && !p.is_dir() {
             if let Some(default_conf) = default_conf {
-                return Ok(toml::from_str(default_conf)?);
+                return Ok((toml::from_str(default_conf)?, None));
             }
         }
-        return Ok(toml::from_str(from_utf8(&std::fs::read(p)?)?)?);
+
+        return Ok((toml::from_str(from_utf8(&std::fs::read(p)?)?)?, Some(p.to_path_buf())));
     }
 
     let nametoml = format!("{name}.toml");
@@ -106,11 +108,11 @@ pub fn load_config<T: DeserializeOwned>(
             continue;
         }
 
-        return Ok(toml::from_str(from_utf8(&std::fs::read(p)?)?)?);
+        return Ok((toml::from_str(from_utf8(&std::fs::read(&p)?)?)?, Some(p)));
     }
 
     if let Some(default_conf) = default_conf {
-        return Ok(toml::from_str(default_conf)?);
+        return Ok((toml::from_str(default_conf)?, None));
     }
 
     Err(Error::NotFound)
