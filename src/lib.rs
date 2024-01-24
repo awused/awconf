@@ -46,6 +46,17 @@ impl std::fmt::Display for Error {
     }
 }
 
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::IO(e) => Some(e),
+            Self::Deserialization(e) => Some(e),
+            Self::Utf8Error(e) => Some(e),
+            Self::NotFound => None,
+        }
+    }
+}
+
 /// Attempts to load a config for the application with the given name, trying
 /// files different locations in order of priority. Returns the config and where it was loaded
 /// from.
