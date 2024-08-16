@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 dirs = "5.0.1"
-serde = { version = "1.0.204", default-features = false }
-toml = "0.8.15"
+serde = { version = "1.0.208", default-features = false }
+toml = "0.8.19"
